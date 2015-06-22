@@ -14,14 +14,14 @@ import (
 	// image.Decode to understand JPEG formatted images. Uncomment these
 	// two lines to also understand GIF and PNG images:
 	// _ "image/gif"
-	_ "image/png"
-	//_ "image/jpeg"
+	// "image/png"
+	_ "image/jpeg"
 )
 
 func main() {
 	// Decode the JPEG data. If reading from file, create a reader with
 	//
-	reader, err := os.Open("img.png")
+	reader, err := os.Open("img.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,20 +33,26 @@ func main() {
 	}
 	bounds := m.Bounds()
 
-	// Calculate a 16-bin histogram for m's red, green, blue and alpha components.
-	//
 	// An image's bounds do not necessarily start at (0, 0), so the two loops start
 	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 	// likely to result in better memory access patterns than X first and Y second.
 
+	greens := 0
+
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
-			//_, _, b, _ := m.At(x, y).RGBA()
-			//fmt.Println("x:", x, "y:", y, "blue:", b)
+			r, g, b, _ := m.At(x, y).RGBA()
+			fmt.Print("x: ", x, " y: ", y, " r: ", r, " g: ", g, " b: ", b)
+			//count green pixels
+			if g > 10000 && r < 100000 && b < 10000 {
+				greens++
+				fmt.Println("    GREEN!!!!!")
+			} else {
+				fmt.Println()
+			}
 
-			Y, Cb, Cr := m.YCbCrAt(x, y)
-			fmt.Println("x:", x, "y:", y, "Y:", Y, "Cb:", Cb, "Cr:", Cr)
 		}
 	}
+	fmt.Println("greens", greens)
 }
