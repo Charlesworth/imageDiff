@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
+	"image/jpeg"
 	"log"
 	"os"
 
 	// Package image/jpeg is not used explicitly in the code below,
 	// but is imported for its initialization side-effect, which allows
 	// image.Decode to understand JPEG formatted images.
-	_ "image/jpeg"
+	//_ "image/jpeg"
 )
 
 func main() {
@@ -26,6 +28,7 @@ func main() {
 	// likely to result in better memory access patterns than X first and Y second.
 
 	greens := 0
+	blue := color.RGBA{0, 0, 255, 255}
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -37,7 +40,7 @@ func main() {
 			if isGreen(r, g, b) {
 				greens++
 				fmt.Println("    GREEN!!!!!")
-				//rmvGreen.Set(x, y, color here)
+				rmvGreen.Set(x, y, blue)
 			} else {
 				fmt.Println()
 			}
@@ -45,6 +48,10 @@ func main() {
 		}
 	}
 	fmt.Println("greens", greens)
+
+	finalFile, _ := os.Create("fart.jpeg")
+	defer finalFile.Close()
+	jpeg.Encode(finalFile, rmvGreen, &jpeg.Options{jpeg.DefaultQuality})
 }
 
 //isGreen returns a bool if the RBG input equates to a green color
