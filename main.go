@@ -8,6 +8,7 @@ import (
 	"image/jpeg"
 	"log"
 	"os"
+	"time"
 
 	// Package image/jpeg is not used explicitly in the code below,
 	// but is imported for its initialization side-effect, which allows
@@ -17,7 +18,11 @@ import (
 
 func main() {
 
-	img := loadJPEG("img2.jpeg")
+	startingTime := time.Now()
+
+	// img := loadJPEG("img2.jpeg")
+	img := loadJPEG("testr.jpg")
+
 	bounds := img.Bounds()
 
 	rmvGreen := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
@@ -28,7 +33,7 @@ func main() {
 	// likely to result in better memory access patterns than X first and Y second.
 
 	greens := 0
-	blue := color.RGBA{0, 0, 255, 255}
+	blue := color.RGBA{255, 255, 255, 255}
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -52,6 +57,9 @@ func main() {
 	finalFile, _ := os.Create("fart.jpeg")
 	defer finalFile.Close()
 	jpeg.Encode(finalFile, rmvGreen, &jpeg.Options{jpeg.DefaultQuality})
+
+	endingTime := time.Now()
+	fmt.Println("time: ", endingTime.Sub(startingTime))
 }
 
 //isGreen returns a bool if the RBG input equates to a green color
