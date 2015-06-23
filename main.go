@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"log"
-	//"strings"
 	"os"
 
 	// Package image/jpeg is not used explicitly in the code below,
@@ -21,7 +20,7 @@ import (
 func main() {
 	// Decode the JPEG data. If reading from file, create a reader with
 	//
-	reader, err := os.Open("img.jpeg")
+	reader, err := os.Open("img2.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,9 +42,9 @@ func main() {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
 			r, g, b, _ := m.At(x, y).RGBA()
-			fmt.Print("x: ", x, " y: ", y, " r: ", r, " g: ", g, " b: ", b)
+			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b, " lu:", luminance(r, g, b))
 			//count green pixels
-			if g > 10000 && r < 100000 && b < 10000 {
+			if isGreen(r, g, b) {
 				greens++
 				fmt.Println("    GREEN!!!!!")
 			} else {
@@ -55,4 +54,16 @@ func main() {
 		}
 	}
 	fmt.Println("greens", greens)
+}
+
+func isGreen(r uint32, g uint32, b uint32) bool {
+	if g > r && g > b && g > 10000 {
+		return true
+	}
+	return false
+}
+
+//credit code from https://github.com/esdrasbeleza/blzimg
+func luminance(r uint32, g uint32, b uint32) uint32 {
+	return uint32(0.2126*float32(r) + 0.7152*float32(g) + 0.0722*float32(b))
 }
