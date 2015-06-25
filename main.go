@@ -18,48 +18,84 @@ import (
 
 func main() {
 
-	startingTime := time.Now()
+	startTime := time.Now()
+	defer runtime(startTime)
 
 	// img := loadJPEG("img2.jpeg")
 	img := loadJPEG("testr.jpg")
+	imgOld := loadJPEG("testr2.jpg")
 
+	rmvGreen := rmvGreenAndCommon(img, imgOld)
+
+	saveImage(rmvGreen, "fart")
+
+}
+
+func runtime(startTime time.Time) {
+	endTime := time.Now()
+	fmt.Println("time: ", endTime.Sub(startTime))
+}
+
+func saveImage(img image.Image, fileName string) {
+	finalFile, _ := os.Create(fileName + ".jpeg")
+	defer finalFile.Close()
+	jpeg.Encode(finalFile, img, &jpeg.Options{jpeg.DefaultQuality})
+}
+
+func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 	bounds := img.Bounds()
 
 	rmvGreen := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
 	draw.Draw(rmvGreen, bounds, img, bounds.Min, draw.Src)
 
+	greens := 0
+	match := 0
+	white := color.RGBA{255, 255, 255, 255}
+
 	// An image's bounds do not necessarily start at (0, 0), so the two loops start
 	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 	// likely to result in better memory access patterns than X first and Y second.
-
-	greens := 0
-	blue := color.RGBA{255, 255, 255, 255}
-
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
 			r, g, b, _ := img.At(x, y).RGBA()
-			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b, " lu:", luminance(r, g, b))
+			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b, " lu:") //, luminance(r, g, b))
 
 			//count green pixels
 			if isGreen(r, g, b) {
 				greens++
-				fmt.Println("    GREEN!!!!!")
-				rmvGreen.Set(x, y, blue)
+				fmt.Println("    GREEN")
+				rmvGreen.Set(x, y, white)
+
 			} else {
-				fmt.Println()
+
+				rOld, gOld, bOld, _ := imgOld.At(x, y).RGBA()
+				if isSimilar(r, g, b, rOld, gOld, bOld) {
+					match++
+					fmt.Println("    MATCH")
+					rmvGreen.Set(x, y, white)
+
+				} else {
+					fmt.Println()
+				}
 			}
 
 		}
 	}
-	fmt.Println("greens", greens)
+	tot := bounds.Max.Y * bounds.Max.X
+	fmt.Println("total pixels", tot)
+	fmt.Println("green pixels", greens)
+	fmt.Println("matched pixels", match)
+	fmt.Println("new pixels", tot-greens-match)
 
-	finalFile, _ := os.Create("fart.jpeg")
-	defer finalFile.Close()
-	jpeg.Encode(finalFile, rmvGreen, &jpeg.Options{jpeg.DefaultQuality})
+	return rmvGreen
+}
 
-	endingTime := time.Now()
-	fmt.Println("time: ", endingTime.Sub(startingTime))
+func isSimilar(r uint32, g uint32, b uint32, rOld uint32, gOld uint32, bOld uint32) bool {
+	if (r < rOld+20 || r > rOld-20) && (b < bOld+20 || b > bOld-20) && (g < gOld+20 || g > gOld-20) {
+		return true
+	}
+	return false
 }
 
 //isGreen returns a bool if the RBG input equates to a green color
