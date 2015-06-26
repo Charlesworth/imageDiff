@@ -24,6 +24,8 @@ func main() {
 	// img := loadJPEG("img2.jpeg")
 	img := loadJPEG("testr.jpg")
 	imgOld := loadJPEG("testr2.jpg")
+	// img := loadJPEG("2.jpg")
+	// imgOld := loadJPEG("1.jpg")
 
 	rmvGreen := rmvGreenAndCommon(img, imgOld)
 
@@ -59,7 +61,7 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
 			r, g, b, _ := img.At(x, y).RGBA()
-			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b, " lu:") //, luminance(r, g, b))
+			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b) //, " lu:", luminance(r, g, b))
 
 			//count green pixels
 			if isGreen(r, g, b) {
@@ -92,7 +94,8 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 }
 
 func isSimilar(r uint32, g uint32, b uint32, rOld uint32, gOld uint32, bOld uint32) bool {
-	if (r < rOld+20 || r > rOld-20) && (b < bOld+20 || b > bOld-20) && (g < gOld+20 || g > gOld-20) {
+	if (r < rOld+10000 && r > rOld-10000) && (b < bOld+10000 && b > bOld-10000) && (g < gOld+10000 && g > gOld-10000) {
+		//if (r == rOld) && (b == bOld) && (g == gOld) {
 		return true
 	}
 	return false
