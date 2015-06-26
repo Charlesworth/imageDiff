@@ -29,7 +29,7 @@ func main() {
 
 	rmvGreen := rmvGreenAndCommon(img, imgOld)
 
-	saveImage(rmvGreen, "fart")
+	saveImage(rmvGreen, "alchemy")
 
 }
 
@@ -85,10 +85,15 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 		}
 	}
 	tot := bounds.Max.Y * bounds.Max.X
+	mismatch := tot - greens - match
 	fmt.Println("total pixels", tot)
 	fmt.Println("green pixels", greens)
 	fmt.Println("matched pixels", match)
-	fmt.Println("new pixels", tot-greens-match)
+	fmt.Println("new pixels", mismatch)
+
+	if mismatch > (tot / 10) {
+		fmt.Println("**ALERT** Over 10 percent change **ALERT**")
+	}
 
 	return rmvGreen
 }
