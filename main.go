@@ -9,31 +9,33 @@ import (
 	"log"
 	"os"
 	"time"
-
-	// Package image/jpeg is not used explicitly in the code below,
-	// but is imported for its initialization side-effect, which allows
-	// image.Decode to understand JPEG formatted images.
-	//_ "image/jpeg"
 )
+
+var debug = false
+var save = true
+var sensitivityPercentage = 10
 
 func main() {
 
-	startTime := time.Now()
-	defer runtime(startTime)
+	if debug {
+		startTime := time.Now()
+		defer runTime(startTime)
+	}
 
-	// img := loadJPEG("img2.jpeg")
 	img := loadJPEG("testr.jpg")
 	imgOld := loadJPEG("testr2.jpg")
 	//img := loadJPEG("2.jpg")
 	//imgOld := loadJPEG("1.jpg")
 
-	rmvGreen := rmvGreenAndCommon(img, imgOld)
+	_, _, rmvGreen := rmvGreenAndCommon(img, imgOld)
 
-	saveImage(rmvGreen, "alchemy")
-
+	if save {
+		//fmt.Println(time.Now().UnixNano())
+		saveImage(rmvGreen, "output") //time.Now().String())
+	}
 }
 
-func runtime(startTime time.Time) {
+func runTime(startTime time.Time) {
 	endTime := time.Now()
 	fmt.Println("time: ", endTime.Sub(startTime))
 }
@@ -44,7 +46,9 @@ func saveImage(img image.Image, fileName string) {
 	jpeg.Encode(finalFile, img, &jpeg.Options{jpeg.DefaultQuality})
 }
 
-func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
+//rmvGreenAndCommon comares two images and
+func rmvGreenAndCommon(img image.Image, imgOld image.Image) (int, int, image.Image) {
+
 	bounds := img.Bounds()
 
 	rmvGreen := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()))
@@ -54,16 +58,14 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 	match := 0
 	white := color.RGBA{255, 255, 255, 255}
 
-	// An image's bounds do not necessarily start at (0, 0), so the two loops start
-	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
-	// likely to result in better memory access patterns than X first and Y second.
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
 			r, g, b, _ := img.At(x, y).RGBA()
-			//fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b) //, " lu:", luminance(r, g, b))
+			if debug {
+				fmt.Println("x:", x, " y:", y, " r:", r, " g:", g, " b:", b, " lu:", luminance(r, g, b))
+			}
 
-			//count green pixels
 			if isGreen(r, g, b) {
 				greens++
 				rmvGreen.Set(x, y, white)
@@ -80,30 +82,54 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 		}
 	}
 
-	tot := bounds.Max.Y * bounds.Max.X
-	mismatch := tot - greens - match
-	fmt.Println("total pixels", tot)
+	totalPixels := bounds.Max.Y * bounds.Max.X
+	mismatchPix := totalPixels - greens - match
+	fmt.Println("total pixels", totalPixels)
 	fmt.Println("green pixels", greens)
 	fmt.Println("matched pixels", match)
-	fmt.Println("new pixels", mismatch)
+	fmt.Println("new pixels", mismatchPix)
 
-	if mismatch > (tot / 10) {
-		fmt.Println("**ALERT** Over 10 percent change **ALERT**")
+	if mismatchPix > (totalPixels / sensitivityPercentage) {
+		fmt.Println("**ALERT** Over", sensitivityPercentage, "percent change **ALERT**")
 	} else {
-		fmt.Println("Change under 10 percent")
+		fmt.Println("Change under", sensitivityPercentage, "percent")
 	}
 
-	return rmvGreen
+	return 0, 0, rmvGreen
 }
 
+//isSimilar compares two RGB value triplets, allowing for a slight change in color or luminance.
 func isSimilar(r uint32, g uint32, b uint32, rOld uint32, gOld uint32, bOld uint32) bool {
-	if (r < rOld+10000 && r > rOld-10000) && (b < bOld+10000 && b > bOld-10000) && (g < gOld+10000 && g > gOld-10000) {
+	var r1 uint32
+	if rOld > 10000 {
+		r1 = rOld - 10000
+	}
+
+	// var r2 uint32 = 65000
+	// if rOld < 55000 {
+	// 	r2 = rOld + 10000
+	// }
+
+	var b1 uint32
+	if bOld > 10000 {
+		b1 = bOld - 10000
+	}
+
+	var g1 uint32
+	if gOld > 10000 {
+		g1 = gOld - 10000
+	}
+	//fmt.Println(rOld, " g:", gOld, " b:", bOld)
+	//fmt.Println("r:", r, " g:", g, " b:", b, " lu:", luminance(r, g, b))
+	//fmt.Println("r1", r1, " r2:", r2)
+
+	if (r < rOld+10000 && r > r1) && (b < bOld+10000 && b > b1) && (g < gOld+10000 && g > g1) {
 		return true
 	}
 	return false
 }
 
-//isGreen returns a bool if the RBG input equates to a green color
+//isGreen returns true if the RBG input equates to a green-ish color
 func isGreen(r uint32, g uint32, b uint32) bool {
 	if g > r && g > b && g > 10000 {
 		return true
@@ -111,8 +137,8 @@ func isGreen(r uint32, g uint32, b uint32) bool {
 	return false
 }
 
-//credit code from https://github.com/esdrasbeleza/blzimg
 //luminance returns the luminance out ~65021 for RGB values r, g, b
+//credit goes to https://github.com/esdrasbeleza/blzimg for luminance
 func luminance(r uint32, g uint32, b uint32) uint32 {
 	return uint32(0.2126*float32(r) + 0.7152*float32(g) + 0.0722*float32(b))
 }
