@@ -24,8 +24,8 @@ func main() {
 	// img := loadJPEG("img2.jpeg")
 	img := loadJPEG("testr.jpg")
 	imgOld := loadJPEG("testr2.jpg")
-	// img := loadJPEG("2.jpg")
-	// imgOld := loadJPEG("1.jpg")
+	//img := loadJPEG("2.jpg")
+	//imgOld := loadJPEG("1.jpg")
 
 	rmvGreen := rmvGreenAndCommon(img, imgOld)
 
@@ -61,12 +61,11 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 
 			r, g, b, _ := img.At(x, y).RGBA()
-			fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b) //, " lu:", luminance(r, g, b))
+			//fmt.Print("x:", x, " y:", y, " r:", r, " g:", g, " b:", b) //, " lu:", luminance(r, g, b))
 
 			//count green pixels
 			if isGreen(r, g, b) {
 				greens++
-				fmt.Println("    GREEN")
 				rmvGreen.Set(x, y, white)
 
 			} else {
@@ -74,16 +73,13 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 				rOld, gOld, bOld, _ := imgOld.At(x, y).RGBA()
 				if isSimilar(r, g, b, rOld, gOld, bOld) {
 					match++
-					fmt.Println("    MATCH")
 					rmvGreen.Set(x, y, white)
 
-				} else {
-					fmt.Println()
 				}
 			}
-
 		}
 	}
+
 	tot := bounds.Max.Y * bounds.Max.X
 	mismatch := tot - greens - match
 	fmt.Println("total pixels", tot)
@@ -93,6 +89,8 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 
 	if mismatch > (tot / 10) {
 		fmt.Println("**ALERT** Over 10 percent change **ALERT**")
+	} else {
+		fmt.Println("Change under 10 percent")
 	}
 
 	return rmvGreen
@@ -100,7 +98,6 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) image.Image {
 
 func isSimilar(r uint32, g uint32, b uint32, rOld uint32, gOld uint32, bOld uint32) bool {
 	if (r < rOld+10000 && r > rOld-10000) && (b < bOld+10000 && b > bOld-10000) && (g < gOld+10000 && g > gOld-10000) {
-		//if (r == rOld) && (b == bOld) && (g == gOld) {
 		return true
 	}
 	return false
