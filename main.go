@@ -22,16 +22,15 @@ func main() {
 		defer runTime(startTime)
 	}
 
-	img := loadJPEG("testr.jpg")
-	imgOld := loadJPEG("testr2.jpg")
+	img := loadJPEG("poo2.jpg")
+	imgOld := loadJPEG("poo.jpg")
 	//img := loadJPEG("2.jpg")
 	//imgOld := loadJPEG("1.jpg")
 
-	_, _, rmvGreen := rmvGreenAndCommon(img, imgOld)
+	changetrigger, rmvGreen := rmvGreenAndCommon(img, imgOld)
 
-	if save {
-		//fmt.Println(time.Now().UnixNano())
-		saveImage(rmvGreen, "output") //time.Now().String())
+	if save && changetrigger {
+		saveImage(rmvGreen, "output")
 	}
 }
 
@@ -46,8 +45,8 @@ func saveImage(img image.Image, fileName string) {
 	jpeg.Encode(finalFile, img, &jpeg.Options{jpeg.DefaultQuality})
 }
 
-//rmvGreenAndCommon comares two images and
-func rmvGreenAndCommon(img image.Image, imgOld image.Image) (int, int, image.Image) {
+//rmvGreenAndCommon compares two images and outputs the diff'd image
+func rmvGreenAndCommon(img image.Image, imgOld image.Image) (bool, image.Image) {
 
 	bounds := img.Bounds()
 
@@ -89,41 +88,42 @@ func rmvGreenAndCommon(img image.Image, imgOld image.Image) (int, int, image.Ima
 	fmt.Println("matched pixels", match)
 	fmt.Println("new pixels", mismatchPix)
 
+	var changeTrigger bool
+
 	if mismatchPix > (totalPixels / sensitivityPercentage) {
+		changeTrigger = true
 		fmt.Println("**ALERT** Over", sensitivityPercentage, "percent change **ALERT**")
 	} else {
+		changeTrigger = false
 		fmt.Println("Change under", sensitivityPercentage, "percent")
 	}
 
-	return 0, 0, rmvGreen
+	return changeTrigger, rmvGreen
 }
 
 //isSimilar compares two RGB value triplets, allowing for a slight change in color or luminance.
 func isSimilar(r uint32, g uint32, b uint32, rOld uint32, gOld uint32, bOld uint32) bool {
-	var r1 uint32
+	var rLowerBound uint32
 	if rOld > 10000 {
-		r1 = rOld - 10000
+		rLowerBound = rOld - 10000
 	}
+	rUpperBound := rOld + 10000
 
-	// var r2 uint32 = 65000
-	// if rOld < 55000 {
-	// 	r2 = rOld + 10000
-	// }
-
-	var b1 uint32
+	var bLowerBound uint32
 	if bOld > 10000 {
-		b1 = bOld - 10000
+		bLowerBound = bOld - 10000
 	}
+	bUpperBound := bOld + 10000
 
-	var g1 uint32
+	var gLowerBound uint32
 	if gOld > 10000 {
-		g1 = gOld - 10000
+		gLowerBound = gOld - 10000
 	}
-	//fmt.Println(rOld, " g:", gOld, " b:", bOld)
-	//fmt.Println("r:", r, " g:", g, " b:", b, " lu:", luminance(r, g, b))
-	//fmt.Println("r1", r1, " r2:", r2)
+	gUpperBound := gOld + 10000
 
-	if (r < rOld+10000 && r > r1) && (b < bOld+10000 && b > b1) && (g < gOld+10000 && g > g1) {
+	if (r < rUpperBound && r > rLowerBound) &&
+		(b < bUpperBound && b > bLowerBound) &&
+		(g < gUpperBound && g > gLowerBound) {
 		return true
 	}
 	return false
