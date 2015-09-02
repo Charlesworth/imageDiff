@@ -22,10 +22,15 @@ func main() {
 		defer runTime(startTime)
 	}
 
-	img := loadJPEG("poo2.jpg")
-	imgOld := loadJPEG("poo.jpg")
-	//img := loadJPEG("2.jpg")
-	//imgOld := loadJPEG("1.jpg")
+	img := loadJPEG(os.Args[1])
+	imgOld := loadJPEG(os.Args[2])
+
+	// img := loadJPEG("test1.jpg")
+	// imgOld := loadJPEG("testOld1.jpg")
+	// img := loadJPEG("test2.jpg")
+	// imgOld := loadJPEG("testOld2.jpg")
+	// img := loadJPEG("test3.jpg")
+	// imgOld := loadJPEG("testOld3.jpg")
 
 	changetrigger, rmvGreen := rmvGreenAndCommon(img, imgOld)
 
